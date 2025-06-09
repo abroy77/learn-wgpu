@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn WGPU</title>
+    <style>
+        canvas {
+            background-color: black;
+            display: block;
+            width: 400px;
+            height: 450px;
+        }
+        #status {
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 8px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wasm-example">
+        <div id="status">Loading WASM...</div>
+    </div>
+    <script type="module">
+        import init from "./pkg/wgpu_testing.js";
+        
+        document.getElementById('status').textContent = 'Initializing WASM...';
+        
+        init().then(() => {
+            console.log("WASM Loaded");
+            document.getElementById('status').textContent = 'WASM Loaded';
+        }).catch(e => {
+            console.error("Failed to load WASM:", e);
+            document.getElementById('status').textContent = 'Error loading WASM';
+        });
+    </script>
+</body>
+
+</html>
