@@ -106,11 +106,23 @@ impl State {
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
-            primitive: (),
-            depth_stencil: (),
-            multisample: (),
-            multiview: (),
-            cache: (),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                unclipped_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            multiview: None,
+            cache: None,
         });
 
         Self {
@@ -120,6 +132,7 @@ impl State {
             config,
             size,
             window,
+            render_pipeline,
         }
     }
     pub fn window(&self) -> &Window {
