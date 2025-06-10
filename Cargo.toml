@@ -4,12 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.98"
 cfg-if = "1.0.0"
 env_logger = "0.11.8"
 log = "0.4.27"
 wasm-bindgen-futures = "0.4.30"
 wgpu = "25.0.2"
-winit = { version = "0.29", features = ["android-native-activity"] }
+winit = { version = "0.30", features = ["android-native-activity"] }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

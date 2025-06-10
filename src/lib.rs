@@ -1,10 +1,12 @@
 use std::sync::Arc;
-
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 use winit::{
+    application::ApplicationHandler,
     event::*,
-    event_loop::EventLoop,
+    event_loop::{ActiveEventLoop, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
-    window::{Window, WindowBuilder},
+    window::Window,
 };
 
 struct State {
@@ -16,10 +18,48 @@ struct State {
     window: Arc<Window>,
     render_pipeline: wgpu::RenderPipeline,
 }
+pub struct App {
+    #[cfg(target_arch = "wasm32")]
+    proxy: Option<winit::event_loop::EventLoopProxy<State>>,
+    state: Option<State>,
+}
+
+impl App {
+    pub fn new(#[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>) -> Self {
+        #[cfg(target_arch = "wasm32")]
+        let proxy = Some(event_loop.create_proxy());
+
+        Self {
+            state: None,
+            #[cfg(target_arch = "wasm32")]
+            proxy,
+        }
+    }
+}
+
+impl ApplicationHandler<State> for App {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        let mut window_attributes = Window::default_attributes();
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::JsCast;
+            use winit::platform::web::WindowAttributesExtWebSys;
+
+            const CANVAS_ID: &str = "canvas";
+            let window = wgpu::web_sys::window().unwrap_throw();
+            let document = window.document().unwrap_throw();
+            let canvas = document.get_element_by_id(CANVAS_ID).unwrap_throw();
+            let html_canvas_element = canvas.unchecked_into();
+            let window_attributes = window_attributes.with_canvas(Some(html_canvas_element));
+
+            let window = Arc::new(event_loop.create_window(window_attributes))
+        }
+    }
+}
 
 impl State {
     // creating some of the wgpu types requires async code
-    async fn new(window: &Window) -> Self {
+    async fn new(window: Arc<Window>) -> anyhow::Result<Self> {
         let size = window.inner_size();
         // The instance is a handle to our GPU
         // Backends::all => Vulkan+Metal+DX12+ Browser WebGPU
@@ -31,7 +71,7 @@ impl State {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window).unwrap();
+        let surface = instance.create_surface(window.clone()).unwrap();
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -224,7 +264,7 @@ pub async fn run() {
             .expect("Couldn't append canvas to document body");
     }
 
-    let mut state = State::new(&window).await;
+    let mut state = State::new(window).await;
     state.surface.configure(&state.device, &state.config);
     let mut surface_configured = true;
 
@@ -273,27 +313,4 @@ pub async fn run() {
         }
         _ => {}
     });
-    // let _ = event_loop.run(move |event, control_flow| match event {
-    //     Event::WindowEvent {
-    //         window_id,
-    //         event: WindowEvent::CloseRequested,
-    //     } if window
-    //     | Event::WindowEvent {
-    //         window_id,
-    //         event:
-    //             WindowEvent::KeyboardInput {
-    //                 event:
-    //                     KeyEvent {
-    //                         physical_key: PhysicalKey::Code(KeyCode::Escape),
-    //                         state: ElementState::Pressed,
-    //                         ..
-    //                     },
-    //                 ..
-    //             },
-    //     } if window_id == state.window().id() => control_flow.exit(),
-    //     Event::WindowEvent { event: WindowEvent::Resized(physical_size)} => {
-
-    //     }
-    //     _ => {}
-    // });
 }
