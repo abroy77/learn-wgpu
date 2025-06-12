@@ -9,7 +9,6 @@ cfg-if = "1.0.0"
 env_logger = "0.11.8"
 log = "0.4.27"
 pollster = "0.4.0"
-wasm-bindgen-futures = "0.4.30"
 wgpu = "25.0.2"
 winit = { version = "0.30", features = ["android-native-activity"] }
 
@@ -23,13 +22,14 @@ strip = true
 console_error_panic_hook = "0.1.6"
 console_log = "1.0"
 wgpu = { version = "25.0", features = ["webgl"]}
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.30"
 web-sys = { version = "0.3", features = [
     "Document",
     "Window",
     "Element",
 ]}
+wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
+
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
