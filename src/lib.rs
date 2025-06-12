@@ -1,7 +1,7 @@
 use std::sync::Arc;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use wgpu::util::DeviceExt;
+use wgpu::util::{DeviceExt, RenderEncoder};
 use winit::{
     application::ApplicationHandler,
     event::*,
@@ -19,7 +19,8 @@ pub struct State {
     window: Arc<Window>,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: wgpu::Buffer,
-    num_vertices: u32,
+    num_indices: u32,
+    index_buffer: wgpu::Buffer,
 }
 pub struct App {
     #[cfg(target_arch = "wasm32")]
@@ -36,19 +37,28 @@ struct Vertex {
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [0.5, -0.5, 0.0],
-        color: [0.0, 0.0, 1.0],
-    }, // right
+        position: [-0.0868241, 0.49240386, 0.0],
+        color: [0.5, 0.2, 0.3],
+    }, // A
     Vertex {
-        position: [0.0, 0.5, 0.0],
-        color: [1.0, 0.0, 0.0],
-    }, // top
+        position: [-0.49513406, 0.06958647, 0.0],
+        color: [0.8, 0.1, 0.3],
+    }, // B
     Vertex {
-        position: [-0.5, -0.5, 0.0],
-        color: [0.0, 1.0, 0.0],
-    }, // left
+        position: [-0.21918549, -0.44939706, 0.0],
+        color: [0.3, 0.0, 0.3],
+    }, // C
+    Vertex {
+        position: [0.35966998, -0.3473291, 0.0],
+        color: [0.3, 5.0, 0.7],
+    }, // D
+    Vertex {
+        position: [0.44147372, 0.2347359, 0.0],
+        color: [0.3, 0.3, 0.8],
+    }, // E
 ];
 
+const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 impl App {
     pub fn new(#[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>) -> Self {
         #[cfg(target_arch = "wasm32")]
@@ -201,6 +211,12 @@ impl State {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -261,7 +277,7 @@ impl State {
             multiview: None,
             cache: None,
         });
-        let num_vertices = VERTICES.len() as u32;
+        let num_indices = INDICES.len() as u32;
 
         Ok(Self {
             surface,
@@ -272,7 +288,8 @@ impl State {
             window,
             render_pipeline,
             vertex_buffer,
-            num_vertices,
+            index_buffer,
+            num_indices,
         })
     }
 
@@ -333,7 +350,8 @@ impl State {
             });
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..self.num_vertices, 0..1);
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
